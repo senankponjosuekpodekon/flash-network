@@ -9,6 +9,10 @@ import walletRoutes from "./routes/wallet.routes.js";
 import transactionRoutes from "./routes/transaction.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import balanceRoutes from "./routes/balance.routes.js";
+import withdrawRoutes from "./routes/withdraw.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import tokenRoutes from "./routes/token.routes.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import "./workers/confirmation.worker.js";
 import "./workers/deposit.worker.js";
@@ -50,6 +54,10 @@ app.use("/wallet", walletRoutes);
 app.use("/transaction", transactionRoutes);
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
+app.use("/balance", balanceRoutes);
+app.use("/withdraw", withdrawRoutes);
+app.use("/admin", adminRoutes);
+app.use("/token", tokenRoutes);
 
 app.use(errorMiddleware);
 

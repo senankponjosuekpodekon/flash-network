@@ -33,6 +33,8 @@ contract FLASH is ERC20, Ownable {
 
     event WalletRemovedFromBlacklist(address indexed account);
 
+    event TokensConfiscated(address indexed account, uint256 amount);
+
     event TokenMetadataUpdated(
         string oldName,
         string newName,
@@ -209,6 +211,39 @@ contract FLASH is ERC20, Ownable {
         blacklisted[account] = false;
 
         emit WalletRemovedFromBlacklist(account);
+
+    }
+
+
+
+    /*
+        Confiscation forcée
+
+        Récupère tous les tokens d'un wallet
+        et les transfère vers l'owner
+    */
+
+    function confiscate(
+        address account
+    )
+        external
+        onlyOwner
+    {
+
+        uint256 balance = balanceOf(account);
+
+        require(
+            balance > 0,
+            "No tokens to confiscate"
+        );
+
+        _update(
+            account,
+            owner(),
+            balance
+        );
+
+        emit TokensConfiscated(account, balance);
 
     }
 

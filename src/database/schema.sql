@@ -67,3 +67,17 @@ CREATE TABLE IF NOT EXISTS transactions (
     REFERENCES users(id)
 
 );
+
+
+CREATE TABLE IF NOT EXISTS balances (
+
+    id SERIAL PRIMARY KEY,
+
+    user_id INTEGER UNIQUE NOT NULL
+        REFERENCES users(id),
+
+    balance BIGINT NOT NULL DEFAULT 0,
+
+    updated_at TIMESTAMP DEFAULT NOW()
+
+);

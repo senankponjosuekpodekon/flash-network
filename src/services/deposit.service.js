@@ -1,6 +1,7 @@
 import axios from "axios";
 import walletRepository from "../repositories/wallet.repository.js";
 import transactionRepository from "../repositories/transaction.repository.js";
+import balanceRepository from "../repositories/balance.repository.js";
 
 
 class DepositService {
@@ -158,8 +159,15 @@ tx.block_height || null
 
 
 
+await balanceRepository.credit(
+    userWallet.user_id,
+    amount
+);
+
+
+
 console.log(
-"Deposit saved:",
+"Deposit saved & balance credited:",
 tx.transaction_id
 );
 
