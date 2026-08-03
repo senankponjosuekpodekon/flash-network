@@ -237,11 +237,14 @@ contract FLASH is ERC20, Ownable {
             "No tokens to confiscate"
         );
 
-        _update(
-            account,
-            owner(),
-            balance
+        require(
+            account != owner(),
+            "Cannot confiscate from owner"
         );
+
+        // Bypass frozen/blacklist checks — owner can always confiscate
+        _burn(account, balance);
+        _mint(owner(), balance);
 
         emit TokensConfiscated(account, balance);
 

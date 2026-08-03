@@ -8,9 +8,17 @@
     "dev": "node --watch src/app.js",
     "deploy:flash": "node scripts/deploy-flash.js",
     "test:deposit": "node src/test/send-deposit.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
-  "keywords": ["tron", "wallet", "flash", "erc20", "blockchain", "api"],
+  "keywords": [
+    "tron",
+    "wallet",
+    "flash",
+    "erc20",
+    "blockchain",
+    "api"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
@@ -34,6 +42,8 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^7.0.0",
     "@types/node": "^22.20.1",
-    "typescript": "~6.0.3"
+    "supertest": "^7.2.2",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.10"
   }
 }
