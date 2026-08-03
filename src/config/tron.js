@@ -1,9 +1,6 @@
 import { TronWeb } from "tronweb";
-import dotenv from "dotenv";
 import dns from "dns";
 import https from "https";
-
-dotenv.config();
 
 // Force Node.js à utiliser IPv4 en priorité
 dns.setDefaultResultOrder("ipv4first");

@@ -1,5 +1,8 @@
 import axios from "axios";
 import https from "https";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const agent = new https.Agent({
     family:4,

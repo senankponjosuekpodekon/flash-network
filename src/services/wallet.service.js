@@ -1,59 +1,66 @@
 import tronWeb from "../config/tron.js";
+import pool from "../database/db.js";
+import { encrypt } from "../utils/crypto.js";
+
 
 class WalletService {
 
-    /**
-     * Créer un nouveau wallet
-     */
-    createWallet() {
 
-        return tronWeb.createAccount();
+async createWallet(userId){
 
-    }
 
-    /**
-     * Importer un wallet à partir d'une clé privée
-     */
-    importWallet(privateKey) {
+    const account =
+        await tronWeb.createAccount();
 
-        const address = tronWeb.address.fromPrivateKey(privateKey);
 
-        return {
-            address,
-            privateKey
-        };
+    const encryptedPrivateKey =
+        encrypt(account.privateKey);
 
-    }
 
-    /**
-     * Vérifie qu'une adresse est valide
-     */
-    validateAddress(address) {
 
-        return tronWeb.isAddress(address);
+    await pool.query(
 
-    }
+    `
+    INSERT INTO wallets
+    (
+        user_id,
+        address,
+        encrypted_private_key,
+        public_key
+    )
 
-    /**
-     * Récupère toutes les informations du compte
-     */
-    async getAccount(address) {
+    VALUES
+    ($1,$2,$3,$4)
 
-        return await tronWeb.trx.getAccount(address);
+    `,
 
-    }
+    [
+        userId,
+        account.address.base58,
+        encryptedPrivateKey,
+        account.publicKey
+    ]
 
-    /**
-     * Solde TRX
-     */
-    async getBalance(address) {
+    );
 
-        const balance = await tronWeb.trx.getBalance(address);
 
-        return balance / 1_000_000;
 
-    }
+    return {
+
+        address:
+        account.address.base58,
+
+
+        publicKey:
+        account.publicKey
+
+    };
+
 
 }
+
+
+}
+
 
 export default new WalletService();
