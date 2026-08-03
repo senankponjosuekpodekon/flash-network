@@ -1,19 +1,10 @@
+import { getFlashContract, createTronWeb } from "../config/tron.js";
 import tronWeb from "../config/tron.js";
 import walletRepository from "../repositories/wallet.repository.js";
 import { decrypt } from "../utils/crypto.js";
 
 
 class TokenService {
-
-    async _getContract() {
-        const flashContractAddress = process.env.FLASH_CONTRACT_ADDRESS;
-
-        if (!flashContractAddress) {
-            throw new Error("FLASH_CONTRACT_ADDRESS missing in .env");
-        }
-
-        return await tronWeb.contract().at(flashContractAddress);
-    }
 
     async getBalance(userId) {
         const wallet = await walletRepository.findByUserId(userId);
@@ -22,7 +13,7 @@ class TokenService {
             throw new Error("Wallet not found");
         }
 
-        const contract = await this._getContract();
+        const contract = await getFlashContract();
 
         const balance = await contract.balanceOf(wallet.address).call();
 
@@ -51,10 +42,11 @@ class TokenService {
         }
 
         const privateKey = decrypt(wallet.encrypted_private_key);
+        const localTronWeb = createTronWeb(privateKey);
 
-        tronWeb.setPrivateKey(privateKey);
-
-        const contract = await this._getContract();
+        const contract = await localTronWeb.contract().at(
+            process.env.FLASH_CONTRACT_ADDRESS
+        );
 
         const balance = await contract.balanceOf(wallet.address).call();
 
@@ -73,7 +65,7 @@ class TokenService {
     }
 
     async getInfo() {
-        const contract = await this._getContract();
+        const contract = await getFlashContract();
 
         const name = await contract.name().call();
         const symbol = await contract.symbol().call();

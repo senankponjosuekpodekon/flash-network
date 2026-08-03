@@ -19,11 +19,15 @@ const TRON_NETWORKS = {
 const network = process.env.TRON_NETWORK || "nile";
 const fullHost = TRON_NETWORKS[network] || TRON_NETWORKS.nile;
 
-const tronWeb = new TronWeb({
+const baseConfig = {
     fullHost,
     headers: {
         "TRON-PRO-API-KEY": process.env.TRON_API_KEY
     },
+};
+
+const tronWeb = new TronWeb({
+    ...baseConfig,
     privateKey: process.env.PRIVATE_KEY
 });
 
@@ -33,6 +37,27 @@ tronWeb.solidityNode.instance.defaults.httpsAgent = agent;
 
 tronWeb.fullNode.instance.defaults.family = 4;
 tronWeb.solidityNode.instance.defaults.family = 4;
+
+export function createTronWeb(privateKey) {
+    const tw = new TronWeb({
+        ...baseConfig,
+        privateKey,
+    });
+    tw.fullNode.instance.defaults.httpsAgent = agent;
+    tw.solidityNode.instance.defaults.httpsAgent = agent;
+    tw.fullNode.instance.defaults.family = 4;
+    tw.solidityNode.instance.defaults.family = 4;
+    return tw;
+}
+
+export async function getFlashContract(privateKey) {
+    const flashContractAddress = process.env.FLASH_CONTRACT_ADDRESS;
+    if (!flashContractAddress) {
+        throw new Error("FLASH_CONTRACT_ADDRESS missing in .env");
+    }
+    const tw = privateKey ? createTronWeb(privateKey) : tronWeb;
+    return tw.contract().at(flashContractAddress);
+}
 
 export default tronWeb;
 export { fullHost, network };

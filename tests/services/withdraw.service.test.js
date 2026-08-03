@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const mockContract = {
+    transfer: vi.fn(() => ({
+        send: vi.fn().mockResolvedValue("txid123"),
+    })),
+    balanceOf: vi.fn(() => ({
+        call: vi.fn().mockResolvedValue(BigInt(1000000)),
+    })),
+};
+
 vi.mock("../../src/config/tron.js", () => ({
     default: {
         setPrivateKey: vi.fn(),
@@ -7,16 +16,15 @@ vi.mock("../../src/config/tron.js", () => ({
             fromPrivateKey: vi.fn().mockReturnValue("TOWNER123"),
         },
         contract: vi.fn(() => ({
-            at: vi.fn().mockResolvedValue({
-                transfer: vi.fn(() => ({
-                    send: vi.fn().mockResolvedValue("txid123"),
-                })),
-                balanceOf: vi.fn(() => ({
-                    call: vi.fn().mockResolvedValue(BigInt(1000000)),
-                })),
-            }),
+            at: vi.fn().mockResolvedValue(mockContract),
         })),
     },
+    createTronWeb: vi.fn(() => ({
+        contract: vi.fn(() => ({
+            at: vi.fn().mockResolvedValue(mockContract),
+        })),
+    })),
+    getFlashContract: vi.fn(() => Promise.resolve(mockContract)),
 }));
 
 vi.mock("../../src/repositories/wallet.repository.js", () => ({
@@ -51,12 +59,12 @@ describe("WithdrawService", () => {
         process.env.FLASH_CONTRACT_ADDRESS = "TFLASH123";
     });
 
-    it("should throw if FLASH_CONTRACT_ADDRESS missing", async () => {
+    it("should throw if no destination address when contract address missing", async () => {
         delete process.env.FLASH_CONTRACT_ADDRESS;
 
         await expect(
-            withdrawService.withdraw(1, "TDEST123", 100)
-        ).rejects.toThrow("FLASH_CONTRACT_ADDRESS missing");
+            withdrawService.withdraw(1, null, 100)
+        ).rejects.toThrow("Destination address required");
     });
 
     it("should throw if no destination address", async () => {
@@ -87,17 +95,19 @@ describe("WithdrawService", () => {
         });
         balanceRepository.debit.mockResolvedValue(BigInt(900));
 
-        const tronWeb = (await import("../../src/config/tron.js")).default;
-        tronWeb.contract = vi.fn(() => ({
-            at: vi.fn().mockResolvedValue({
-                transfer: vi.fn(() => ({
-                    send: vi.fn().mockRejectedValue(new Error("Broadcast failed")),
-                })),
-                balanceOf: vi.fn(() => ({
-                    call: vi.fn().mockResolvedValue(BigInt(1000000)),
-                })),
-            }),
-        }));
+        const { createTronWeb } = await import("../../src/config/tron.js");
+        createTronWeb.mockReturnValue({
+            contract: vi.fn(() => ({
+                at: vi.fn().mockResolvedValue({
+                    transfer: vi.fn(() => ({
+                        send: vi.fn().mockRejectedValue(new Error("Broadcast failed")),
+                    })),
+                    balanceOf: vi.fn(() => ({
+                        call: vi.fn().mockResolvedValue(BigInt(1000000)),
+                    })),
+                }),
+            })),
+        });
 
         await expect(
             withdrawService.withdraw(1, "TDEST123", 100)

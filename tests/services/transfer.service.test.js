@@ -1,6 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import transferService from "../../src/services/transfer.service.js";
 
+vi.mock("../../src/database/db.js", () => {
+    const mockClient = {
+        query: vi.fn((sql) => {
+            if (sql.includes("UPDATE balances SET balance = balance -")) {
+                return Promise.resolve({ rows: [{ balance: "900" }] });
+            }
+            return Promise.resolve({ rows: [] });
+        }),
+        release: vi.fn(),
+    };
+    return {
+        default: {
+            connect: vi.fn(() => Promise.resolve(mockClient)),
+        },
+    };
+});
+
 vi.mock("../../src/repositories/balance.repository.js", () => ({
     default: {
         getBalance: vi.fn(),
@@ -76,14 +93,10 @@ describe("TransferService", () => {
 
     it("transfer should succeed with valid params", async () => {
         userRepository.findByEmail.mockResolvedValue({ id: 2, email: "other@test.com" });
-        balanceRepository.transfer.mockResolvedValue(undefined);
-        transactionRepository.create.mockResolvedValue({ id: 1 });
 
         const result = await transferService.transfer(1, "other@test.com", 100);
 
         expect(result.transferred).toBe("100");
         expect(result.to).toBe("other@test.com");
-        expect(balanceRepository.transfer).toHaveBeenCalledWith(1, 2, BigInt(100));
-        expect(transactionRepository.create).toHaveBeenCalledTimes(2);
     });
 });

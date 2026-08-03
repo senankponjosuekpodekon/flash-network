@@ -1,6 +1,7 @@
 import balanceRepository from "../repositories/balance.repository.js";
 import transactionRepository from "../repositories/transaction.repository.js";
 import userRepository from "../repositories/user.repository.js";
+import pool from "../database/db.js";
 
 
 class TransferService {
@@ -27,31 +28,50 @@ class TransferService {
             throw new Error("Amount must be positive");
         }
 
-        await balanceRepository.transfer(fromUserId, recipient.id, amt);
+        const client = await pool.connect();
 
-        await transactionRepository.create({
-            userId: fromUserId,
-            from: null,
-            to: null,
-            amount: amt.toString(),
-            txid: null,
-            status: "CONFIRMED",
-            type: "TRANSFER",
-            direction: "OUT",
-            block_number: null
-        });
+        try {
+            await client.query("BEGIN");
 
-        await transactionRepository.create({
-            userId: recipient.id,
-            from: null,
-            to: null,
-            amount: amt.toString(),
-            txid: null,
-            status: "CONFIRMED",
-            type: "TRANSFER",
-            direction: "IN",
-            block_number: null
-        });
+            await client.query(
+                `INSERT INTO balances (user_id, balance) VALUES ($1, 0) ON CONFLICT (user_id) DO NOTHING`,
+                [recipient.id]
+            );
+
+            const debitResult = await client.query(
+                `UPDATE balances SET balance = balance - $1, updated_at = NOW()
+                 WHERE user_id = $2 AND balance >= $1 RETURNING balance`,
+                [amt.toString(), fromUserId]
+            );
+
+            if (debitResult.rows.length === 0) {
+                throw new Error("Insufficient balance");
+            }
+
+            await client.query(
+                `UPDATE balances SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2`,
+                [amt.toString(), recipient.id]
+            );
+
+            await client.query(
+                `INSERT INTO transactions (user_id, from_address, to_address, amount, txid, status, type, direction, block_number)
+                 VALUES ($1, NULL, NULL, $2, NULL, 'CONFIRMED', 'TRANSFER', 'OUT', NULL)`,
+                [fromUserId, amt.toString()]
+            );
+
+            await client.query(
+                `INSERT INTO transactions (user_id, from_address, to_address, amount, txid, status, type, direction, block_number)
+                 VALUES ($1, NULL, NULL, $2, NULL, 'CONFIRMED', 'TRANSFER', 'IN', NULL)`,
+                [recipient.id, amt.toString()]
+            );
+
+            await client.query("COMMIT");
+        } catch (error) {
+            await client.query("ROLLBACK");
+            throw error;
+        } finally {
+            client.release();
+        }
 
         return { transferred: amt.toString(), to: toEmail };
     }

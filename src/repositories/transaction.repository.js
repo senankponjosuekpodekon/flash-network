@@ -55,7 +55,7 @@ return result.rows[0];
 
 
 
-async findByUserId(userId){
+async findByUserId(userId, page = 1, limit = 50){
 
 
 const result =
@@ -66,10 +66,11 @@ SELECT *
 FROM transactions
 WHERE user_id=$1
 ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
 
 `,
 
-[userId]
+[userId, limit, (page - 1) * limit]
 
 );
 

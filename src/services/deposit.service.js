@@ -2,7 +2,6 @@ import axios from "axios";
 import pool from "../database/db.js";
 import walletRepository from "../repositories/wallet.repository.js";
 import transactionRepository from "../repositories/transaction.repository.js";
-import balanceRepository from "../repositories/balance.repository.js";
 import { fullHost } from "../config/tron.js";
 
 

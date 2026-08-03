@@ -1,23 +1,17 @@
-import tronWeb from "../config/tron.js";
+import { getFlashContract } from "../config/tron.js";
 import walletRepository from "../repositories/wallet.repository.js";
 
 
 class FaucetService {
 
     async claim(userId) {
-        const flashContractAddress = process.env.FLASH_CONTRACT_ADDRESS;
-
-        if (!flashContractAddress) {
-            throw new Error("FLASH_CONTRACT_ADDRESS missing in .env");
-        }
-
         const wallet = await walletRepository.findByUserId(userId);
 
         if (!wallet) {
             throw new Error("Wallet not found — create a wallet first");
         }
 
-        const contract = await tronWeb.contract().at(flashContractAddress);
+        const contract = await getFlashContract();
 
         const balance = await contract.balanceOf(wallet.address).call();
         const currentBalance = BigInt(balance.toString());

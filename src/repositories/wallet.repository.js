@@ -7,7 +7,8 @@ class WalletRepository {
     async create(
         userId,
         address,
-        encryptedPrivateKey
+        encryptedPrivateKey,
+        publicKey
     ) {
 
         const result =
@@ -17,18 +18,20 @@ class WalletRepository {
                 (
                     user_id,
                     address,
-                    encrypted_private_key
+                    encrypted_private_key,
+                    public_key
                 )
 
                 VALUES
-                ($1,$2,$3)
+                ($1,$2,$3,$4)
 
                 RETURNING *
                 `,
                 [
                     userId,
                     address,
-                    encryptedPrivateKey
+                    encryptedPrivateKey,
+                    publicKey
                 ]
             );
 

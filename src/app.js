@@ -17,8 +17,11 @@ import healthRoutes from "./routes/health.routes.js";
 import faucetRoutes from "./routes/faucet.routes.js";
 import apiDocsRoutes from "./routes/api-docs.routes.js";
 import errorMiddleware from "./middleware/error.middleware.js";
-import "./workers/confirmation.worker.js";
-import "./workers/deposit.worker.js";
+
+if (process.env.WORKERS_ENABLED !== "false") {
+    import("./workers/confirmation.worker.js");
+    import("./workers/deposit.worker.js");
+}
 
 const requiredEnv = [
     "JWT_SECRET",
@@ -26,6 +29,7 @@ const requiredEnv = [
     "DATABASE_URL",
     "PRIVATE_KEY",
     "TRON_API_KEY",
+    "FLASH_CONTRACT_ADDRESS",
 ];
 
 for (const key of requiredEnv) {
@@ -42,7 +46,7 @@ app.use(helmet());
 app.use(cors({
     origin: process.env.CORS_ORIGIN
         ? process.env.CORS_ORIGIN.split(",")
-        : "*",
+        : false,
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));

@@ -1,4 +1,4 @@
-import tronWeb from "../config/tron.js";
+import { createTronWeb, getFlashContract } from "../config/tron.js";
 import walletRepository from "../repositories/wallet.repository.js";
 import balanceRepository from "../repositories/balance.repository.js";
 import transactionRepository from "../repositories/transaction.repository.js";
@@ -8,12 +8,6 @@ import { decrypt } from "../utils/crypto.js";
 class WithdrawService {
 
     async withdraw(userId, toAddress, amount) {
-        const flashContractAddress = process.env.FLASH_CONTRACT_ADDRESS;
-
-        if (!flashContractAddress) {
-            throw new Error("FLASH_CONTRACT_ADDRESS missing in .env");
-        }
-
         if (!toAddress) {
             throw new Error("Destination address required");
         }
@@ -34,10 +28,11 @@ class WithdrawService {
 
         try {
             const privateKey = decrypt(wallet.encrypted_private_key);
+            const localTronWeb = createTronWeb(privateKey);
 
-            tronWeb.setPrivateKey(privateKey);
-
-            const contract = await tronWeb.contract().at(flashContractAddress);
+            const contract = await localTronWeb.contract().at(
+                process.env.FLASH_CONTRACT_ADDRESS
+            );
 
             const txid = await contract.transfer(
                 toAddress,

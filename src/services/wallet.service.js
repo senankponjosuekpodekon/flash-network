@@ -1,5 +1,5 @@
 import tronWeb from "../config/tron.js";
-import pool from "../database/db.js";
+import walletRepository from "../repositories/wallet.repository.js";
 import { encrypt } from "../utils/crypto.js";
 
 
@@ -17,30 +17,11 @@ async createWallet(userId){
         encrypt(account.privateKey);
 
 
-
-    await pool.query(
-
-    `
-    INSERT INTO wallets
-    (
-        user_id,
-        address,
-        encrypted_private_key,
-        public_key
-    )
-
-    VALUES
-    ($1,$2,$3,$4)
-
-    `,
-
-    [
+    await walletRepository.create(
         userId,
         account.address.base58,
         encryptedPrivateKey,
         account.publicKey
-    ]
-
     );
 
 

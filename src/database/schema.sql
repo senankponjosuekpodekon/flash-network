@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 
     amount BIGINT NOT NULL,
 
-    txid VARCHAR(100),
+    txid VARCHAR(100) UNIQUE,
 
     status VARCHAR(20)
         DEFAULT 'PENDING',
