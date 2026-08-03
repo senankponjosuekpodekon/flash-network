@@ -11,8 +11,16 @@ const agent = new https.Agent({
     keepAlive: true
 });
 
+const TRON_NETWORKS = {
+    nile: "https://nile.trongrid.io",
+    mainnet: "https://api.trongrid.io",
+};
+
+const network = process.env.TRON_NETWORK || "nile";
+const fullHost = TRON_NETWORKS[network] || TRON_NETWORKS.nile;
+
 const tronWeb = new TronWeb({
-    fullHost: "https://nile.trongrid.io",
+    fullHost,
     headers: {
         "TRON-PRO-API-KEY": process.env.TRON_API_KEY
     },
@@ -27,3 +35,4 @@ tronWeb.fullNode.instance.defaults.family = 4;
 tronWeb.solidityNode.instance.defaults.family = 4;
 
 export default tronWeb;
+export { fullHost, network };

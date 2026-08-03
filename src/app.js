@@ -13,6 +13,9 @@ import balanceRoutes from "./routes/balance.routes.js";
 import withdrawRoutes from "./routes/withdraw.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import tokenRoutes from "./routes/token.routes.js";
+import healthRoutes from "./routes/health.routes.js";
+import faucetRoutes from "./routes/faucet.routes.js";
+import apiDocsRoutes from "./routes/api-docs.routes.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import "./workers/confirmation.worker.js";
 import "./workers/deposit.worker.js";
@@ -50,6 +53,7 @@ app.get("/", (req, res) => {
     res.send("FLASH NETWORK API ONLINE");
 });
 
+app.use("/health", healthRoutes);
 app.use("/wallet", walletRoutes);
 app.use("/transaction", transactionRoutes);
 app.use("/auth", authRoutes);
@@ -58,6 +62,8 @@ app.use("/balance", balanceRoutes);
 app.use("/withdraw", withdrawRoutes);
 app.use("/admin", adminRoutes);
 app.use("/token", tokenRoutes);
+app.use("/faucet", faucetRoutes);
+app.use("/api-docs", apiDocsRoutes);
 
 app.use(errorMiddleware);
 

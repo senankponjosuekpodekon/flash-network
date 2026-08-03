@@ -3,6 +3,7 @@ import pool from "../database/db.js";
 import walletRepository from "../repositories/wallet.repository.js";
 import transactionRepository from "../repositories/transaction.repository.js";
 import balanceRepository from "../repositories/balance.repository.js";
+import { fullHost } from "../config/tron.js";
 
 
 class DepositService {
@@ -39,7 +40,7 @@ wallet.address
 const response =
 await axios.get(
 
-`https://nile.trongrid.io/v1/accounts/${wallet.address}/transactions/trc20`,
+`${fullHost}/v1/accounts/${wallet.address}/transactions/trc20`,
 
 {
 params:{

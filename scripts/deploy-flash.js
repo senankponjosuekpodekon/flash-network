@@ -11,8 +11,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 
+const TRON_NETWORKS = {
+    nile: "https://nile.trongrid.io",
+    mainnet: "https://api.trongrid.io",
+};
+
+const network = process.env.TRON_NETWORK || "nile";
+const fullHost = TRON_NETWORKS[network] || TRON_NETWORKS.nile;
+
 const tronWeb = new TronWeb({
-    fullHost: "https://nile.trongrid.io",
+    fullHost,
     headers: {
         "TRON-PRO-API-KEY": process.env.TRON_API_KEY
     },

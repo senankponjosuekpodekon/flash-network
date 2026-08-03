@@ -105,6 +105,19 @@ class AdminService {
         };
     }
 
+    async updateMetadata(newName, newSymbol) {
+        const contract = await this._getContract();
+
+        const txid = await contract.updateMetadata(
+            newName,
+            newSymbol
+        ).send({
+            feeLimit: 100_000_000
+        });
+
+        return { txid, newName, newSymbol };
+    }
+
 }
 
 export default new AdminService();

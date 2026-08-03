@@ -167,4 +167,25 @@ router.post(
 );
 
 
+router.post(
+    "/update-metadata",
+    authMiddleware,
+    adminMiddleware,
+    [
+        body("name").notEmpty().withMessage("Token name required"),
+        body("symbol").notEmpty().withMessage("Token symbol required"),
+    ],
+    validate,
+    async (req, res) => {
+        try {
+            const result = await adminService.updateMetadata(req.body.name, req.body.symbol);
+            res.json(result);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: "Internal server error" });
+        }
+    }
+);
+
+
 export default router;
