@@ -1,4 +1,5 @@
 import axios from "axios";
+import pool from "../database/db.js";
 import walletRepository from "../repositories/wallet.repository.js";
 import transactionRepository from "../repositories/transaction.repository.js";
 import balanceRepository from "../repositories/balance.repository.js";
@@ -120,49 +121,59 @@ wallet.address
 
 
 
-await transactionRepository.create({
+const client = await pool.connect();
 
-userId:
-userWallet.user_id,
+try {
+    await client.query("BEGIN");
 
+    await client.query(
+        `
+        INSERT INTO transactions
+        (
+            user_id,
+            from_address,
+            to_address,
+            amount,
+            txid,
+            status,
+            type,
+            direction,
+            block_number
+        )
+        VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        ON CONFLICT DO NOTHING
+        `,
+        [
+            userWallet.user_id,
+            from,
+            to,
+            amount,
+            tx.transaction_id,
+            "CONFIRMED",
+            "DEPOSIT",
+            "IN",
+            tx.block_height || null
+        ]
+    );
 
-from,
+    await client.query(
+        `
+        INSERT INTO balances (user_id, balance)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id)
+        DO UPDATE SET balance = balances.balance + $2, updated_at = NOW()
+        `,
+        [userWallet.user_id, amount]
+    );
 
-
-to,
-
-
-amount,
-
-
-txid:
-tx.transaction_id,
-
-
-status:
-"CONFIRMED",
-
-
-type:
-"DEPOSIT",
-
-
-direction:
-"IN",
-
-
-block_number:
-tx.block_height || null
-
-
-});
-
-
-
-await balanceRepository.credit(
-    userWallet.user_id,
-    amount
-);
+    await client.query("COMMIT");
+} catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+} finally {
+    client.release();
+}
 
 
 

@@ -66,3 +66,17 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`FLASH API running on port ${PORT}`);
 });
+
+process.on("SIGINT", async () => {
+    console.log("Shutting down...");
+    const pool = (await import("./database/db.js")).default;
+    await pool.end();
+    process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+    console.log("Shutting down...");
+    const pool = (await import("./database/db.js")).default;
+    await pool.end();
+    process.exit(0);
+});

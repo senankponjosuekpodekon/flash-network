@@ -1,6 +1,7 @@
 import pool from "../database/db.js";
 import tronWeb from "../config/tron.js";
 import transactionRepository from "../repositories/transaction.repository.js";
+import balanceRepository from "../repositories/balance.repository.js";
 
 
 async function checkPendingTransactions(){
@@ -52,6 +53,28 @@ async function checkPendingTransactions(){
                         tx.txid,
                         info
                     );
+
+
+                    if (tx.type === 'WITHDRAW' && tx.direction === 'OUT') {
+                        if (info.revert) {
+                            console.log(
+                                "Withdraw FAILED on-chain — re-crediting balance:",
+                                tx.txid
+                            );
+
+                            await balanceRepository.credit(tx.user_id, tx.amount);
+
+                            await pool.query(
+                                `UPDATE transactions SET status='FAILED' WHERE txid=$1`,
+                                [tx.txid]
+                            );
+                        } else {
+                            console.log(
+                                "Withdraw confirmed on-chain:",
+                                tx.txid
+                            );
+                        }
+                    }
 
 
                 }
