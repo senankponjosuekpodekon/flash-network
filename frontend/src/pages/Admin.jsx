@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../lib/api.js";
+import { useToast } from "../contexts/ToastContext.jsx";
 import {
   Settings,
   Coins,
@@ -24,6 +25,7 @@ function AdminCard({ title, icon: Icon, children }) {
 }
 
 export default function AdminPage() {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(null);
   const [results, setResults] = useState({});
 

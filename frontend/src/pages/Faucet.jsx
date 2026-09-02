@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { api } from "../lib/api.js";
+import { useToast } from "../contexts/ToastContext.jsx";
 import { Droplet, Loader2, Zap } from "lucide-react";
 
 export default function FaucetPage() {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
