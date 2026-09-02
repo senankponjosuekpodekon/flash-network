@@ -4,6 +4,7 @@ import { useToast } from "../contexts/ToastContext.jsx";
 import { ArrowLeftRight, Loader2 } from "lucide-react";
 
 export default function TransferPage() {
+  const { showToast } = useToast();
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);

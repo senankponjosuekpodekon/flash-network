@@ -4,6 +4,7 @@ import { useToast } from "../contexts/ToastContext.jsx";
 import { Wallet as WalletIcon, Plus, Loader2, Copy, Check } from "lucide-react";
 
 export default function WalletPage() {
+  const { showToast } = useToast();
   const [wallet, setWallet] = useState(null);
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
