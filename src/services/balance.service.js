@@ -14,9 +14,11 @@ async getUserBalance(userId){
 
     if(!wallet){
 
-        throw new Error(
-            "Wallet not found"
-        );
+        return {
+            address: null,
+            balance: 0,
+            unit: "TRX"
+        };
 
     }
 

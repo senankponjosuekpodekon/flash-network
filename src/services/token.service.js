@@ -10,7 +10,11 @@ class TokenService {
         const wallet = await walletRepository.findByUserId(userId);
 
         if (!wallet) {
-            throw new Error("Wallet not found");
+            return {
+                address: null,
+                balance: "0",
+                unit: "FLASH"
+            };
         }
 
         const contract = await getFlashContract();

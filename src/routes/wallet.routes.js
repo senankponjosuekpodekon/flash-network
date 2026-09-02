@@ -39,7 +39,7 @@ router.get(
                 req.user.id
             );
 
-            res.json(wallet);
+            res.json(wallet ?? null);
         } catch (error) {
             console.error(error);
 
