@@ -315,3 +315,173 @@ Automatiser via `cron` ou un service cloud.
 - **README** : `README.md`
 - **Démo** : `DEMO.md`
 - **Pitch** : `PITCH.md`
+
+---
+
+## 12. Déploiement MVP gratuit
+
+Stack choisi :
+
+```
+Frontend (Netlify) → Backend API (Render) → DB (Neon) → TronGrid API
+```
+
+### 12.1 Base de données — Neon
+
+1. Créer un compte sur [neon.tech](https://neon.tech).
+2. Créer un nouveau projet.
+3. Créer une base `flash_network`.
+4. Copier la **connection string** (`DATABASE_URL` fournie par Neon, au format `postgresql://user:pass@endpoint/neondb?sslmode=require`).
+5. Initialiser le schéma :
+
+```bash
+psql "DATABASE_URL_NEON" -f src/database/schema.sql
+```
+
+> Neon's free tier : 500 MB de stockage, compute serverless (s'endort après inactivité).
+
+### 12.2 Backend — Render
+
+1. Créer un compte sur [render.com](https://render.com).
+2. New → Web Service → connecter le repo GitHub.
+3. Configuration :
+   - **Runtime** : Node
+   - **Build command** : `npm install`
+   - **Start command** : `node src/app.js`
+   - **Root directory** : `./` (racine du repo)
+4. Variables d'environnement (Render Dashboard → Environment) :
+
+```env
+NODE_ENV=production
+TRON_NETWORK=mainnet
+DATABASE_URL=<connection string Neon>
+JWT_SECRET=<générer avec openssl rand -base64 64>
+ENCRYPTION_KEY=<clé AES-256-CBC 32 bytes hex>
+PRIVATE_KEY=<clé privée wallet admin TRON mainnet>
+TRON_API_KEY=<clé TronGrid>
+FLASH_CONTRACT_ADDRESS=<adresse contrat mainnet>
+CORS_ORIGIN=https://votre-netlify-app.netlify.app,https://www.votredomaine.com
+WORKERS_ENABLED=true
+ADMIN_WALLET_ADDRESS=<adresse TRON admin>
+```
+
+5. Déployer. Render fournira une URL `https://flash-api-xxxx.onrender.com`.
+
+> ⚠️ Free tier : le service s'endort après 15 min d'inactivité (cold start ~30 sec au premier appel).
+
+### 12.3 TronGrid API key
+
+1. Créer un compte sur [trongrid.io](https://trongrid.io).
+2. Générer une API key.
+3. La mettre dans `TRON_API_KEY` sur Render.
+4. Free tier : limité en requêtes/minute. Pour un MVP test c'est suffisant.
+
+### 12.4 Frontend — Netlify
+
+1. Créer un compte sur [netlify.com](https://netlify.com).
+2. Add new site → import from GitHub.
+3. Configuration :
+   - **Base directory** : `frontend`
+   - **Build command** : `npm run build`
+   - **Publish directory** : `frontend/dist`
+4. Variables d'environnement (si besoin dans `.env.production` ou Netlify UI) :
+
+```env
+VITE_API_URL=https://flash-api-xxxx.onrender.com
+```
+
+5. Adapter `frontend/vite.config.js` pour la production :
+
+```js
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
+});
+```
+
+6. Adapter `frontend/src/lib/api.js` pour utiliser l'URL de l'API en production :
+
+```js
+const API_BASE = import.meta.env.VITE_API_URL || "/api";
+```
+
+> En dev, `VITE_API_URL` n'est pas définie et les requêtes passent par le proxy Vite `/api`. En prod, `VITE_API_URL` pointe vers Render.
+
+### 12.5 CORS sur Render
+
+Assurez-vous que `CORS_ORIGIN` sur Render contient l'URL Netlify exacte, par exemple :
+
+```env
+CORS_ORIGIN=https://flash-network.netlify.app
+```
+
+### 12.6 Déploiement du smart contract
+
+1. Prévoir un wallet TRON mainnet avec du TRX.
+2. Déployer depuis votre machine locale avec `.env` pointant sur mainnet :
+
+```bash
+TRON_NETWORK=mainnet
+TRON_API_KEY=<key>
+PRIVATE_KEY=<clé>
+DATABASE_URL=<Neon connection string>
+node scripts/deploy-flash.js
+```
+
+3. Mettre à jour `FLASH_CONTRACT_ADDRESS` sur Render.
+
+### 12.7 Commandes de test post-déploiement
+
+```bash
+# Health
+curl https://flash-api-xxxx.onrender.com/health
+
+# Token info
+curl https://flash-api-xxxx.onrender.com/token/info
+
+# Register
+curl -X POST https://flash-api-xxxx.onrender.com/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"demo@investor.com","password":"DemoPass123!"}'
+```
+
+### 12.8 Limites du gratuit
+
+| Service | Limite | Impact |
+|---------|--------|--------|
+| **Neon** | 500 MB, compute serverless | Suffisant pour centaines d'utilisateurs. Cold start DB (~1 sec). |
+| **Render** | 750 h/mois, s'endort | Cold start API (~30 sec). Pas adapté à fort trafic. |
+| **Netlify** | 100 Go bande passante/mois | Très suffisant pour MVP. |
+| **TronGrid** | Limites free tier | Passer à Pro si > 1000 req/jour. |
+
+### 12.9 Passage en payant
+
+Quand le MVP valide le modèle :
+
+1. **Neon** → plan Scale ($19/mois) pour performance constante.
+2. **Render** → plan Starter ($7/mois) ou migrer vers Fly/Railway.
+3. **Netlify** → plan Pro si bande passante dépassée.
+4. **TronGrid** → plan Pro ($50-200/mois).
+
+Coût minimal pour un MVP stable : **~30-50 $/mois** + TRX pour le gas.
+
+---
+
+## 13. Architecture de l'URL en production
+
+```textnhttps://flash-network.netlify.app       → Frontend
+https://flash-api-xxxx.onrender.com     → API
+postgresql://...                          → Neon
+```
