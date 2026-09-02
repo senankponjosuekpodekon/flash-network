@@ -1,12 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../lib/api.js";
 import { useToast } from "../contexts/ToastContext.jsx";
-import { Droplet, Loader2, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Droplet, Loader2, Zap, Wallet } from "lucide-react";
 
 export default function FaucetPage() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [checkingWallet, setCheckingWallet] = useState(true);
+  const [wallet, setWallet] = useState(null);
   const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    api
+      .getWallet()
+      .then(setWallet)
+      .catch(() => setWallet(null))
+      .finally(() => setCheckingWallet(false));
+  }, []);
 
   const handleClaim = async () => {
     setLoading(true);
@@ -34,10 +45,17 @@ export default function FaucetPage() {
           Get free FLASH tokens for testing. Only available for wallets with less than 1000 FLASH.
         </p>
 
-        <button onClick={handleClaim} disabled={loading} className="btn-primary">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-          Claim 1000 FLASH
-        </button>
+        {!wallet ? (
+          <Link to="/wallet" className="btn-primary inline-flex items-center justify-center gap-2">
+            <Wallet className="w-4 h-4" />
+            Create a wallet first
+          </Link>
+        ) : (
+          <button onClick={handleClaim} disabled={loading} className="btn-primary">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            Claim 1000 FLASH
+          </button>
+        )}
 
         {result && (
           <div className="mt-6 p-4 bg-green-950/50 border border-green-900 rounded-lg text-left">
