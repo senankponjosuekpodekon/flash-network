@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 import balanceRepository from "../repositories/balance.repository.js";
 import transactionRepository from "../repositories/transaction.repository.js";
 import userRepository from "../repositories/user.repository.js";
@@ -53,16 +55,19 @@ class TransferService {
                 [amt.toString(), recipient.id]
             );
 
+            const outTxid = `internal-${crypto.randomUUID()}`;
+            const inTxid = `internal-${crypto.randomUUID()}`;
+
             await client.query(
                 `INSERT INTO transactions (user_id, from_address, to_address, amount, txid, status, type, direction, block_number)
-                 VALUES ($1, NULL, NULL, $2, NULL, 'CONFIRMED', 'TRANSFER', 'OUT', NULL)`,
-                [fromUserId, amt.toString()]
+                 VALUES ($1, NULL, NULL, $2, $3, 'CONFIRMED', 'TRANSFER', 'OUT', NULL)`,
+                [fromUserId, amt.toString(), outTxid]
             );
 
             await client.query(
                 `INSERT INTO transactions (user_id, from_address, to_address, amount, txid, status, type, direction, block_number)
-                 VALUES ($1, NULL, NULL, $2, NULL, 'CONFIRMED', 'TRANSFER', 'IN', NULL)`,
-                [recipient.id, amt.toString()]
+                 VALUES ($1, NULL, NULL, $2, $3, 'CONFIRMED', 'TRANSFER', 'IN', NULL)`,
+                [recipient.id, amt.toString(), inTxid]
             );
 
             await client.query("COMMIT");
