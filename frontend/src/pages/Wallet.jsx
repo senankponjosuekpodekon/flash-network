@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "../lib/api.js";
+import { useToast } from "../contexts/ToastContext.jsx";
 import { Wallet as WalletIcon, Plus, Loader2, Copy, Check } from "lucide-react";
 
 export default function WalletPage() {
