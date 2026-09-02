@@ -26,6 +26,13 @@ await walletRepository.findAllAddresses();
 for(const wallet of wallets){
 
 
+// Si jamais last_scanned_timestamp est resté à 0, on scanne les dernières 24h
+// pour capturer les dépôts récents sans re-scanner toute l'historique TronGrid
+let minTimestamp = wallet.last_scanned_timestamp || 0;
+if (minTimestamp === 0) {
+    minTimestamp = Date.now() - 24 * 60 * 60 * 1000;
+}
+
 try{
 
 
@@ -42,9 +49,11 @@ await axios.get(
 `${fullHost}/v1/accounts/${wallet.address}/transactions/trc20`,
 
 {
+headers: {
+    "TRON-PRO-API-KEY": process.env.TRON_API_KEY || ""
+},
 params:{
-min_timestamp:
-wallet.last_scanned_timestamp || 0,
+min_timestamp: minTimestamp,
 
 limit:50,
 contract_address: flashContract
@@ -188,36 +197,34 @@ tx.transaction_id
 
 
 
-if(transactions.length > 0){
-
-
-const latest = Math.max(
-...transactions.map(
-tx => tx.block_timestamp || 0
-)
-);
-
-
+// Met à jour le timestamp même s'il n'y a pas eu de transaction
+// pour ne pas re-scanner la même plage continuellement
+const latest = transactions.length > 0
+    ? Math.max(...transactions.map(tx => tx.block_timestamp || 0))
+    : Date.now();
 
 await walletRepository.updateScanTimestamp(
-wallet.address,
-latest
+    wallet.address,
+    latest
 );
 
-
-}
+// Petit délai entre chaque wallet pour éviter de saturer TronGrid
+await new Promise(resolve => setTimeout(resolve, 500));
 
 
 
 }
 catch(error){
 
-
-console.error(
-"Deposit error:",
-error.message
-);
-
+if (error.response && error.response.status === 429) {
+    console.error(`Deposit rate limit (429) for ${wallet.address} — backing off`);
+    await new Promise(resolve => setTimeout(resolve, 5000));
+} else {
+    console.error(
+        "Deposit error:",
+        error.message
+    );
+}
 
 }
 

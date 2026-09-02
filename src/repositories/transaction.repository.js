@@ -36,7 +36,7 @@ RETURNING *
 data.userId,
 data.from,
 data.to,
-data.amount,
+String(data.amount),
 data.txid,
 data.status,
 data.type,

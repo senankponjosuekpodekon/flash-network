@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 
     to_address VARCHAR(100),
 
-    amount BIGINT NOT NULL,
+    amount NUMERIC(40,0) NOT NULL,
 
     txid VARCHAR(100) NOT NULL UNIQUE,
 
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 
     confirmed_at TIMESTAMP,
 
-    fee BIGINT DEFAULT 0,
+    fee NUMERIC(40,0) DEFAULT 0,
 
     created_at TIMESTAMP
         DEFAULT CURRENT_TIMESTAMP,
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS balances (
     user_id INTEGER UNIQUE NOT NULL
         REFERENCES users(id),
 
-    balance BIGINT NOT NULL DEFAULT 0,
+    balance NUMERIC(40,0) NOT NULL DEFAULT 0,
 
     updated_at TIMESTAMP DEFAULT NOW()
 

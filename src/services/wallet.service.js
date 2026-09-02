@@ -16,25 +16,25 @@ async createWallet(userId){
     const encryptedPrivateKey =
         encrypt(account.privateKey);
 
+    const address = account.address.base58;
+    const publicKey = account.publicKey;
 
     await walletRepository.create(
         userId,
-        account.address.base58,
+        address,
         encryptedPrivateKey,
-        account.publicKey
+        publicKey
     );
 
-
+    // Évite au deposit scanner de requêter toute l'historique TronGrid
+    await walletRepository.updateScanTimestamp(
+        address,
+        Date.now()
+    );
 
     return {
-
-        address:
-        account.address.base58,
-
-
-        publicKey:
-        account.publicKey
-
+        address,
+        publicKey
     };
 
 

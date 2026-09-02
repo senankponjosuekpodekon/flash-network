@@ -42,7 +42,7 @@ class BalanceRepository {
             WHERE user_id = $2
             RETURNING balance
             `,
-            [amount, userId]
+            [String(amount), userId]
         );
 
         return BigInt(result.rows[0].balance);
@@ -60,7 +60,7 @@ class BalanceRepository {
               AND balance >= $1
             RETURNING balance
             `,
-            [amount, userId]
+            [String(amount), userId]
         );
 
         if (result.rows.length === 0) {
@@ -87,7 +87,7 @@ class BalanceRepository {
                   AND balance >= $1
                 RETURNING balance
                 `,
-                [amount, fromUserId]
+                [String(amount), fromUserId]
             );
 
             if (debitResult.rows.length === 0) {
@@ -101,7 +101,7 @@ class BalanceRepository {
                     updated_at = NOW()
                 WHERE user_id = $2
                 `,
-                [amount, toUserId]
+                [String(amount), toUserId]
             );
 
             await client.query("COMMIT");
